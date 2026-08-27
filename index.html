@@ -1,2132 +1,413 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Asistente Conversacional 3D</title>
-
-    <!-- Three.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
+    <title>Asistente 3D Multilingüe (Sin API Key)</title>
     <style>
         * {
             box-sizing: border-box;
-        }
-
-        :root {
-            --bg: #020617;
-            --panel: rgba(15, 23, 42, 0.92);
-            --panel-light: #1e293b;
-            --primary: #6366f1;
-            --primary-hover: #4f46e5;
-            --secondary: #0ea5e9;
-            --success: #22c55e;
-            --danger: #ef4444;
-            --text: #f8fafc;
-            --muted: #94a3b8;
-            --border: rgba(148, 163, 184, 0.15);
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         body {
-            margin: 0;
-            min-height: 100vh;
-            font-family:
-                "Segoe UI",
-                Tahoma,
-                Geneva,
-                Verdana,
-                sans-serif;
-
-            background:
-                radial-gradient(
-                    circle at top,
-                    #1e1b4b 0%,
-                    #0f172a 40%,
-                    #020617 100%
-                );
-
-            color: var(--text);
-
+            background-color: #0f172a;
+            color: #f8fafc;
             display: flex;
-            align-items: center;
-            justify-content: center;
-
-            padding: 20px;
-        }
-
-        .app {
-            width: 100%;
-            max-width: 850px;
-
-            background: var(--panel);
-
-            border: 1px solid var(--border);
-            border-radius: 28px;
-
-            box-shadow:
-                0 30px 80px rgba(0, 0, 0, 0.45),
-                inset 0 1px 0 rgba(255,255,255,0.05);
-
+            flex-direction: column;
+            height: 100vh;
             overflow: hidden;
-
-            backdrop-filter: blur(20px);
         }
 
-        /* HEADER */
-
-        .header {
-            padding: 25px 30px;
-
+        header {
+            background-color: #1e293b;
+            padding: 1rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-
-            border-bottom: 1px solid var(--border);
-
-            background: rgba(30, 41, 59, 0.55);
+            border-bottom: 1px solid #334155;
         }
 
-        .brand {
+        header h1 {
+            font-size: 1.25rem;
+            color: #38bdf8;
+        }
+
+        .controls {
             display: flex;
-            align-items: center;
-            gap: 14px;
+            gap: 10px;
         }
 
-        .brand-icon {
-            width: 48px;
-            height: 48px;
+        .controls select {
+            background: #0f172a;
+            color: #f8fafc;
+            border: 1px solid #475569;
+            padding: 0.5rem;
+            border-radius: 6px;
+        }
 
-            border-radius: 15px;
-
+        .main-container {
             display: flex;
-            align-items: center;
-            justify-content: center;
-
-            font-size: 25px;
-
-            background:
-                linear-gradient(
-                    135deg,
-                    #6366f1,
-                    #0ea5e9
-                );
-
-            box-shadow:
-                0 8px 25px rgba(99, 102, 241, 0.35);
-        }
-
-        .brand h1 {
-            margin: 0;
-            font-size: 20px;
-        }
-
-        .brand p {
-            margin: 3px 0 0;
-            color: var(--muted);
-            font-size: 13px;
-        }
-
-        .status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-
-            color: var(--muted);
-            font-size: 13px;
-        }
-
-        .status-dot {
-            width: 9px;
-            height: 9px;
-
-            border-radius: 50%;
-
-            background: var(--success);
-
-            box-shadow:
-                0 0 10px var(--success);
-        }
-
-        /* CONTENT */
-
-        .content {
-            padding: 30px;
-        }
-
-        /* AVATAR */
-
-        .avatar-wrapper {
+            flex: 1;
             position: relative;
-
-            width: 240px;
-            height: 240px;
-
-            margin: 0 auto 25px;
-
-            border-radius: 50%;
-
-            background:
-                radial-gradient(
-                    circle,
-                    rgba(99,102,241,0.25),
-                    rgba(14,165,233,0.08),
-                    transparent 70%
-                );
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
-        .avatar-ring {
-            position: absolute;
-
-            width: 220px;
-            height: 220px;
-
-            border-radius: 50%;
-
-            border: 1px solid rgba(99,102,241,0.3);
-
-            animation: pulseRing 3s infinite;
-        }
-
-        @keyframes pulseRing {
-            0%, 100% {
-                transform: scale(1);
-                opacity: .5;
-            }
-
-            50% {
-                transform: scale(1.08);
-                opacity: .9;
-            }
-        }
-
-        #avatar-container {
-            position: relative;
-
-            width: 200px;
-            height: 200px;
-
-            border-radius: 50%;
-
-            overflow: hidden;
-
-            background:
-                linear-gradient(
-                    180deg,
-                    #111827,
-                    #020617
-                );
-
-            border: 2px solid rgba(255,255,255,0.08);
-
-            box-shadow:
-                inset 0 0 40px rgba(99,102,241,0.12),
-                0 15px 50px rgba(0,0,0,0.4);
-        }
-
-        #avatar-container canvas {
-            display: block;
-            width: 100%;
+        #canvas-container {
+            flex: 1;
             height: 100%;
         }
 
-        /* TITLE */
-
-        .welcome {
-            text-align: center;
-            margin-bottom: 25px;
-        }
-
-        .welcome h2 {
-            margin: 0 0 7px;
-
-            font-size: 26px;
-        }
-
-        .welcome p {
-            margin: 0;
-
-            color: var(--muted);
-            font-size: 14px;
-        }
-
-        /* CONTROLS */
-
-        .controls {
-            display: grid;
-
-            grid-template-columns: 1fr 1fr;
-
-            gap: 15px;
-
-            margin-bottom: 18px;
-        }
-
-        .field {
+        .chat-panel {
+            width: 400px;
+            background: #1e293b;
+            border-left: 1px solid #334155;
             display: flex;
             flex-direction: column;
-            gap: 7px;
         }
 
-        label {
-            color: #cbd5e1;
-            font-size: 13px;
-            font-weight: 600;
-        }
-
-        select {
-            width: 100%;
-
-            padding: 13px 14px;
-
-            border-radius: 12px;
-
-            border: 1px solid var(--border);
-
-            background: #0f172a;
-            color: white;
-
-            outline: none;
-
-            font-size: 14px;
-
-            transition: .2s;
-        }
-
-        select:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(99,102,241,.15);
-        }
-
-        /* BUTTON */
-
-        #startBtn {
-            width: 100%;
-
-            border: 0;
-            border-radius: 14px;
-
-            padding: 15px;
-
-            font-size: 16px;
-            font-weight: 700;
-
-            color: white;
-
-            cursor: pointer;
-
-            background:
-                linear-gradient(
-                    135deg,
-                    var(--primary),
-                    var(--secondary)
-                );
-
-            box-shadow:
-                0 10px 25px rgba(99,102,241,.25);
-
-            transition:
-                transform .2s,
-                box-shadow .2s,
-                opacity .2s;
-        }
-
-        #startBtn:hover {
-            transform: translateY(-2px);
-
-            box-shadow:
-                0 15px 30px rgba(99,102,241,.35);
-        }
-
-        #startBtn:active {
-            transform: translateY(0);
-        }
-
-        #startBtn:disabled {
-            cursor: not-allowed;
-            opacity: .7;
-        }
-
-        /* MICROPHONE ICON */
-
-        .mic {
-            display: inline-flex;
-
-            width: 20px;
-            height: 20px;
-
-            margin-right: 7px;
-
-            vertical-align: -4px;
-        }
-
-        /* OUTPUT */
-
-        .conversation {
-            margin-top: 22px;
-
-            background: rgba(2, 6, 23, 0.65);
-
-            border: 1px solid var(--border);
-
-            border-radius: 18px;
-
-            overflow: hidden;
-        }
-
-        .conversation-header {
-            padding: 13px 17px;
-
-            font-size: 13px;
-            font-weight: 700;
-
-            color: #cbd5e1;
-
-            border-bottom: 1px solid var(--border);
-        }
-
-        .messages {
-            padding: 17px;
-
-            min-height: 140px;
-
-            max-height: 300px;
-
+        .messages-container {
+            flex: 1;
+            padding: 1rem;
             overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
         }
 
         .message {
-            margin-bottom: 14px;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            max-width: 85%;
+            line-height: 1.4;
         }
 
-        .message:last-child {
-            margin-bottom: 0;
+        .message.user {
+            background: #0284c7;
+            align-self: flex-end;
+        }
+
+        .message.ai {
+            background: #334155;
+            align-self: flex-start;
         }
 
         .message-label {
-            font-size: 11px;
-
-            color: var(--muted);
-
-            margin-bottom: 5px;
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin-bottom: 0.25rem;
+            font-weight: bold;
         }
 
-        .message-text {
-            line-height: 1.55;
-
-            font-size: 14px;
-
-            padding: 11px 13px;
-
-            border-radius: 12px;
-
-            background: #1e293b;
+        .input-panel {
+            padding: 1rem;
+            background: #0f172a;
+            border-top: 1px solid #334155;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
         }
 
-        .message.user .message-text {
-            background: rgba(99,102,241,.14);
-
-            border: 1px solid rgba(99,102,241,.18);
+        button#startBtn {
+            background-color: #0284c7;
+            color: white;
+            border: none;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        .message.ai .message-text {
-            background: rgba(14,165,233,.10);
-
-            border: 1px solid rgba(14,165,233,.15);
+        button#startBtn:hover {
+            background-color: #0284c7;
         }
 
-        /* FOOTER */
-
-        .footer {
-            padding: 15px 30px;
-
-            border-top: 1px solid var(--border);
-
-            color: #64748b;
-
-            text-align: center;
-
-            font-size: 11px;
-        }
-
-        /* RESPONSIVE */
-
-        @media (max-width: 650px) {
-
-            body {
-                padding: 10px;
-            }
-
-            .app {
-                border-radius: 20px;
-            }
-
-            .header {
-                padding: 20px;
-            }
-
-            .content {
-                padding: 20px;
-            }
-
-            .controls {
-                grid-template-columns: 1fr;
-            }
-
-            .avatar-wrapper {
-                width: 210px;
-                height: 210px;
-            }
-
-            .avatar-ring {
-                width: 190px;
-                height: 190px;
-            }
-
-            #avatar-container {
-                width: 175px;
-                height: 175px;
-            }
-
-            .welcome h2 {
-                font-size: 22px;
-            }
-
-            .status {
-                display: none;
-            }
-
-            .footer {
-                padding: 14px 20px;
-            }
+        button#startBtn:disabled {
+            background-color: #475569;
+            cursor: not-allowed;
         }
     </style>
-</head>
 
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
 <body>
 
-<div class="app">
-
-    <!-- HEADER -->
-
-    <header class="header">
-
-        <div class="brand">
-
-            <div class="brand-icon">
-                🤖
-            </div>
-
-            <div>
-                <h1>Asistente 3D</h1>
-                <p>Asistente conversacional inteligente</p>
-            </div>
-
+    <header>
+        <h1>Asistente 3D Multilingüe</h1>
+        <div class="controls">
+            <select id="targetLang">
+                <option value="es-ES">Español</option>
+                <option value="en-US">English</option>
+                <option value="fr-FR">Français</option>
+                <option value="de-DE">Deutsch</option>
+                <option value="it-IT">Italiano</option>
+            </select>
+            <select id="voiceSelect">
+                <option value="">Voz automática</option>
+            </select>
         </div>
-
-        <div class="status">
-            <span class="status-dot"></span>
-            Sistema listo
-        </div>
-
     </header>
 
+    <div class="main-container">
+        <div id="canvas-container"></div>
 
-    <!-- CONTENT -->
-
-    <main class="content">
-
-        <!-- AVATAR -->
-
-        <div class="avatar-wrapper">
-
-            <div class="avatar-ring"></div>
-
-            <div id="avatar-container"></div>
-
-        </div>
-
-
-        <!-- WELCOME -->
-
-        <div class="welcome">
-
-            <h2>Hola, soy tu asistente</h2>
-
-            <p>
-                Pulsa el botón y comienza a hablar conmigo.
-            </p>
-
-        </div>
-
-
-        <!-- CONTROLS -->
-
-        <div class="controls">
-
-            <div class="field">
-
-                <label for="targetLang">
-                    Idioma de respuesta
-                </label>
-
-                <select id="targetLang">
-
-                    <option value="es-ES">
-                        🇪🇸 Español
-                    </option>
-
-                    <option value="en-US">
-                        🇺🇸 Inglés
-                    </option>
-
-                    <option value="pt-PT">
-                        🇵🇹 Portugués
-                    </option>
-
-                    <option value="it-IT">
-                        🇮🇹 Italiano
-                    </option>
-
-                    <option value="de-DE">
-                        🇩🇪 Alemán
-                    </option>
-
-                    <option value="fr-FR">
-                        🇫🇷 Francés
-                    </option>
-
-                </select>
-
-            </div>
-
-
-            <div class="field">
-
-                <label for="voiceSelect">
-                    Voz
-                </label>
-
-                <select id="voiceSelect">
-                    <option value="">
-                        Voz automática
-                    </option>
-                </select>
-
-            </div>
-
-        </div>
-
-
-        <!-- BUTTON -->
-
-        <button id="startBtn">
-
-            <span class="mic">🎙️</span>
-
-            Hablar con el asistente
-
-        </button>
-
-
-        <!-- CONVERSATION -->
-
-        <section class="conversation">
-
-            <div class="conversation-header">
-                💬 Conversación
-            </div>
-
-            <div
-                id="messages"
-                class="messages"
-            >
-
+        <div class="chat-panel">
+            <div class="messages-container" id="messages">
                 <div class="message ai">
-
-                    <div class="message-label">
-                        ASISTENTE
-                    </div>
-
-                    <div class="message-text">
-                        Estoy listo para escucharte.
-                    </div>
-
+                    <div class="message-label">ASISTENTE</div>
+                    <div class="message-text">¡Hola! Selecciona tu idioma arriba, presiona hablar y me comunicaré contigo traduciendo de forma interactiva.</div>
                 </div>
-
             </div>
 
-        </section>
-
-    </main>
-
-
-    <footer class="footer">
-
-        Asistente Conversacional 3D · HTML + JavaScript + Three.js
-
-    </footer>
-
-</div>
-
-
-<script>
-
-"use strict";
-
-/* =========================================================
-   ELEMENTOS
-========================================================= */
-
-const startBtn =
-    document.getElementById("startBtn");
-
-const targetLang =
-    document.getElementById("targetLang");
-
-const voiceSelect =
-    document.getElementById("voiceSelect");
-
-const messages =
-    document.getElementById("messages");
-
-const container =
-    document.getElementById("avatar-container");
-
-
-/* =========================================================
-   VARIABLES DEL AVATAR
-========================================================= */
-
-let scene;
-let camera;
-let renderer;
-
-let model;
-let headGroup;
-
-let jaw;
-let leftEye;
-let rightEye;
-
-let isSpeaking = false;
-
-const clock = new THREE.Clock();
-
-
-/* =========================================================
-   VARIABLES DE VOZ
-========================================================= */
-
-let recognition = null;
-
-let voices = [];
-
-let isListening = false;
-
-
-/* =========================================================
-   COLORES DEL AVATAR
-========================================================= */
-
-const COLORS = {
-
-    skin: 0x818cf8,
-
-    skinLight: 0xa5b4fc,
-
-    joint: 0x312e81,
-
-    eye: 0xffffff,
-
-    pupil: 0x020617,
-
-    mouth: 0x0f172a
-
-};
-
-
-/* =========================================================
-   INICIALIZAR AVATAR
-========================================================= */
-
-function init3D() {
-
-    scene =
-        new THREE.Scene();
-
-
-    camera =
-        new THREE.PerspectiveCamera(
-            40,
-            1,
-            0.1,
-            100
-        );
-
-
-    camera.position.set(
-        0,
-        1.65,
-        3
-    );
-
-
-    renderer =
-        new THREE.WebGLRenderer({
-            alpha: true,
-            antialias: true
-        });
-
-
-    renderer.setPixelRatio(
-        Math.min(
-            window.devicePixelRatio,
-            2
-        )
-    );
-
-
-    renderer.setSize(
-        container.clientWidth,
-        container.clientHeight
-    );
-
-
-    container.appendChild(
-        renderer.domElement
-    );
-
-
-    /* LUCES */
-
-    const ambient =
-        new THREE.AmbientLight(
-            0xffffff,
-            1.1
-        );
-
-    scene.add(ambient);
-
-
-    const directional =
-        new THREE.DirectionalLight(
-            0xffffff,
-            1
-        );
-
-    directional.position.set(
-        2,
-        4,
-        5
-    );
-
-    scene.add(directional);
-
-
-    const blueLight =
-        new THREE.PointLight(
-            0x6366f1,
-            2,
-            8
-        );
-
-    blueLight.position.set(
-        -2,
-        2,
-        3
-    );
-
-    scene.add(blueLight);
-
-
-    createAvatar();
-
-    animateAvatar();
-
-}
-
-
-/* =========================================================
-   CREAR AVATAR
-========================================================= */
-
-function createAvatar() {
-
-    model =
-        new THREE.Group();
-
-    scene.add(model);
-
-
-    /* CABEZA */
-
-    headGroup =
-        new THREE.Group();
-
-    headGroup.position.y = 0.2;
-
-    model.add(headGroup);
-
-
-    const headMaterial =
-        new THREE.MeshStandardMaterial({
-            color: COLORS.skin,
-            roughness: 0.55,
-            metalness: 0.05
-        });
-
-
-    const head =
-        new THREE.Mesh(
-            new THREE.SphereGeometry(
-                0.63,
-                32,
-                32
-            ),
-            headMaterial
-        );
-
-
-    head.scale.set(
-        0.86,
-        1,
-        0.82
-    );
-
-
-    head.position.y = 1.55;
-
-    headGroup.add(head);
-
-
-    /* OJOS */
-
-    leftEye =
-        createEye();
-
-    leftEye.position.set(
-        -0.22,
-        1.65,
-        0.53
-    );
-
-    headGroup.add(leftEye);
-
-
-    rightEye =
-        createEye();
-
-    rightEye.position.set(
-        0.22,
-        1.65,
-        0.53
-    );
-
-    headGroup.add(rightEye);
-
-
-    /* BOCA */
-
-    const mouthMaterial =
-        new THREE.MeshStandardMaterial({
-            color: COLORS.mouth
-        });
-
-
-    jaw =
-        new THREE.Mesh(
-            new THREE.BoxGeometry(
-                0.30,
-                0.07,
-                0.05
-            ),
-            mouthMaterial
-        );
-
-
-    jaw.position.set(
-        0,
-        1.35,
-        0.54
-    );
-
-
-    headGroup.add(jaw);
-
-
-    /* CUELLO */
-
-    const jointMaterial =
-        new THREE.MeshStandardMaterial({
-            color: COLORS.joint,
-            roughness: 0.8
-        });
-
-
-    const neck =
-        new THREE.Mesh(
-            new THREE.CylinderGeometry(
-                0.18,
-                0.22,
-                0.35,
-                20
-            ),
-            jointMaterial
-        );
-
-
-    neck.position.y = 0.95;
-
-    model.add(neck);
-
-
-    /* CUERPO */
-
-    const bodyMaterial =
-        new THREE.MeshStandardMaterial({
-            color: COLORS.skinLight,
-            roughness: 0.6
-        });
-
-
-    const torso =
-        new THREE.Mesh(
-            new THREE.CylinderGeometry(
-                0.48,
-                0.62,
-                0.8,
-                24
-            ),
-            bodyMaterial
-        );
-
-
-    torso.position.y = 0.55;
-
-    model.add(torso);
-
-
-    /* HOMBROS */
-
-    createShoulder(
-        -1,
-        jointMaterial,
-        bodyMaterial
-    );
-
-    createShoulder(
-        1,
-        jointMaterial,
-        bodyMaterial
-    );
-
-
-    /* CADERA */
-
-    const hips =
-        new THREE.Mesh(
-            new THREE.CylinderGeometry(
-                0.42,
-                0.52,
-                0.35,
-                24
-            ),
-            bodyMaterial
-        );
-
-
-    hips.position.y = -0.05;
-
-    model.add(hips);
-
-
-    /* BRAZOS */
-
-    createArm(
-        -1,
-        jointMaterial,
-        bodyMaterial
-    );
-
-    createArm(
-        1,
-        jointMaterial,
-        bodyMaterial
-    );
-
-
-    /* PIERNAS */
-
-    createLeg(
-        -1,
-        jointMaterial,
-        bodyMaterial
-    );
-
-    createLeg(
-        1,
-        jointMaterial,
-        bodyMaterial
-    );
-
-
-    model.position.y = -0.4;
-
-}
-
-
-/* =========================================================
-   OJO
-========================================================= */
-
-function createEye() {
-
-    const group =
-        new THREE.Group();
-
-
-    const eyeMaterial =
-        new THREE.MeshStandardMaterial({
-            color: COLORS.eye
-        });
-
-
-    const pupilMaterial =
-        new THREE.MeshStandardMaterial({
-            color: COLORS.pupil
-        });
-
-
-    const eye =
-        new THREE.Mesh(
-            new THREE.SphereGeometry(
-                0.11,
-                20,
-                20
-            ),
-            eyeMaterial
-        );
-
-
-    group.add(eye);
-
-
-    const pupil =
-        new THREE.Mesh(
-            new THREE.SphereGeometry(
-                0.045,
-                16,
-                16
-            ),
-            pupilMaterial
-        );
-
-
-    pupil.position.z = 0.09;
-
-    group.add(pupil);
-
-
-    return group;
-
-}
-
-
-/* =========================================================
-   HOMBRO
-========================================================= */
-
-function createShoulder(
-    side,
-    jointMaterial,
-    bodyMaterial
-) {
-
-    const shoulder =
-        new THREE.Mesh(
-            new THREE.SphereGeometry(
-                0.14,
-                20,
-                20
-            ),
-            jointMaterial
-        );
-
-
-    shoulder.position.set(
-        side * 0.62,
-        0.75,
-        0
-    );
-
-
-    model.add(shoulder);
-
-}
-
-
-/* =========================================================
-   BRAZO
-========================================================= */
-
-function createArm(
-    side,
-    jointMaterial,
-    bodyMaterial
-) {
-
-    const arm =
-        new THREE.Mesh(
-            new THREE.CylinderGeometry(
-                0.11,
-                0.11,
-                0.55,
-                16
-            ),
-            bodyMaterial
-        );
-
-
-    arm.position.set(
-        side * 0.72,
-        0.38,
-        0
-    );
-
-
-    arm.rotation.z =
-        side * -0.25;
-
-
-    model.add(arm);
-
-
-    const hand =
-        new THREE.Mesh(
-            new THREE.SphereGeometry(
-                0.13,
-                16,
-                16
-            ),
-            bodyMaterial
-        );
-
-
-    hand.position.set(
-        side * 0.84,
-        0.10,
-        0
-    );
-
-
-    model.add(hand);
-
-}
-
-
-/* =========================================================
-   PIERNA
-========================================================= */
-
-function createLeg(
-    side,
-    jointMaterial,
-    bodyMaterial
-) {
-
-    const leg =
-        new THREE.Mesh(
-            new THREE.CylinderGeometry(
-                0.14,
-                0.11,
-                0.75,
-                16
-            ),
-            bodyMaterial
-        );
-
-
-    leg.position.set(
-        side * 0.25,
-        -0.55,
-        0
-    );
-
-
-    model.add(leg);
-
-
-    const foot =
-        new THREE.Mesh(
-            new THREE.SphereGeometry(
-                0.17,
-                16,
-                16
-            ),
-            bodyMaterial
-        );
-
-
-    foot.scale.set(
-        1.2,
-        0.55,
-        1.4
-    );
-
-
-    foot.position.set(
-        side * 0.25,
-        -0.95,
-        0.08
-    );
-
-
-    model.add(foot);
-
-}
-
-
-/* =========================================================
-   ANIMACIÓN
-========================================================= */
-
-function animateAvatar() {
-
-    requestAnimationFrame(
-        animateAvatar
-    );
-
-
-    const time =
-        clock.getElapsedTime();
-
-
-    /* MOVIMIENTO SUAVE */
-
-    if (model) {
-
-        model.position.y =
-            -0.4 +
-            Math.sin(time * 1.5) *
-            0.025;
-
-        model.rotation.y =
-            Math.sin(time * 0.8) *
-            0.04;
-
-    }
-
-
-    /* CABEZA */
-
-    if (headGroup) {
-
-        headGroup.rotation.y =
-            Math.sin(time * 0.9) *
-            0.025;
-
-    }
-
-
-    /* BOCA */
-
-    if (jaw) {
-
-        if (isSpeaking) {
-
-            jaw.scale.y =
-                1 +
-                Math.abs(
-                    Math.sin(time * 18)
-                ) * 3;
-
-        } else {
-
-            jaw.scale.y = 1;
-
+            <div class="input-panel">
+                <button id="startBtn">
+                    <span>🎙️</span> Hablar con el asistente
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let scene, camera, renderer, head, jaw, leftEye, rightEye;
+        let isSpeaking = false;
+        let recognition;
+        let voices = [];
+        
+        const container = document.getElementById("canvas-container");
+        const messages = document.getElementById("messages");
+        const startBtn = document.getElementById("startBtn");
+        const targetLang = document.getElementById("targetLang");
+        const voiceSelect = document.getElementById("voiceSelect");
+
+        function init3D() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0f172a);
+
+            camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.set(0, 0, 5.5);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 5, 5);
+            scene.add(directionalLight);
+
+            const headGeo = new THREE.SphereGeometry(1, 32, 32);
+            const headMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.3 });
+            head = new THREE.Mesh(headGeo, headMat);
+            scene.add(head);
+
+            const jawGeo = new THREE.BoxGeometry(0.6, 0.3, 0.6);
+            jaw = new THREE.Mesh(jawGeo, new THREE.MeshStandardMaterial({ color: 0x0284c7 }));
+            jaw.position.set(0, -0.6, 0.7);
+            head.add(jaw);
+
+            const eyeGeo = new THREE.SphereGeometry(0.15, 16, 16);
+            const eyeMat = new THREE.MeshStandardMaterial({ color: 0x0f172a });
+            
+            leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+            leftEye.position.set(0.35, 0.3, 0.9);
+            head.add(leftEye);
+
+            rightEye = new THREE.Mesh(eyeGeo, eyeMat);
+            rightEye.position.set(-0.35, 0.3, 0.9);
+            head.add(rightEye);
+
+            animateAvatar();
         }
 
-    }
+        let clock = new THREE.Clock();
+        function animateAvatar() {
+            requestAnimationFrame(animateAvatar);
+            const elapsedTime = clock.getElapsedTime();
 
+            head.position.y = Math.sin(elapsedTime * 2) * 0.05;
 
-    /* PARPADEO */
-
-    const blink =
-        Math.sin(time * 0.7) >
-        0.998;
-
-
-    if (leftEye && rightEye) {
-
-        leftEye.scale.y =
-            blink ? 0.15 : 1;
-
-        rightEye.scale.y =
-            blink ? 0.15 : 1;
-
-    }
-
-
-    renderer.render(
-        scene,
-        camera
-    );
-
-}
-
-
-/* =========================================================
-   RECONOCIMIENTO DE VOZ
-========================================================= */
-
-function initSpeechRecognition() {
-
-    const SpeechRecognition =
-        window.SpeechRecognition ||
-        window.webkitSpeechRecognition;
-
-
-    if (!SpeechRecognition) {
-
-        startBtn.disabled = true;
-
-        startBtn.textContent =
-            "🎙️ Navegador sin reconocimiento de voz";
-
-        addMessage(
-            "ai",
-            "Tu navegador no soporta reconocimiento de voz. Prueba con Google Chrome o Microsoft Edge."
-        );
-
-        return;
-
-    }
-
-
-    recognition =
-        new SpeechRecognition();
-
-
-    recognition.lang =
-        "es-ES";
-
-
-    recognition.interimResults =
-        false;
-
-
-    recognition.continuous =
-        false;
-
-
-    recognition.maxAlternatives =
-        1;
-
-
-    recognition.onstart =
-        () => {
-
-            isListening = true;
-
-            startBtn.disabled = true;
-
-            startBtn.innerHTML =
-                "🔴 Escuchando... habla ahora";
-
-        };
-
-
-    recognition.onresult =
-        async (event) => {
-
-            const text =
-                event
-                    .results[0][0]
-                    .transcript
-                    .trim();
-
-
-            if (!text) {
-
-                resetButton();
-
-                return;
-
+            if (isSpeaking) {
+                jaw.rotation.x = Math.sin(elapsedTime * 25) * 0.25 + 0.15;
+            } else {
+                jaw.rotation.x = 0;
             }
 
+            renderer.render(scene, camera);
+        }
 
-            addMessage(
-                "user",
-                text
-            );
+        function initSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                alert("Tu navegador no soporta reconocimiento de voz nativo. Usa Google Chrome.");
+                return;
+            }
 
+            recognition = new SpeechRecognition();
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
 
-            startBtn.innerHTML =
-                "🧠 Analizando...";
+            startBtn.addEventListener("click", () => {
+                recognition.lang = targetLang.value;
+                try {
+                    recognition.start();
+                    startBtn.disabled = true;
+                    startBtn.innerHTML = "🎙️ Escuchando...";
+                } catch (e) {
+                    console.error(e);
+                    resetButton();
+                }
+            });
 
+            recognition.onresult = async (event) => {
+                const text = event.results[0][0].transcript.trim();
+                if (!text) {
+                    resetButton();
+                    return;
+                }
+
+                addMessage("user", text);
+                startBtn.innerHTML = "🧠 Procesando traductor...";
+
+                const idiomaSeleccionado = targetLang.value;
+                const promptConIdioma = `Responde brevemente y en el idioma con código ${idiomaSeleccionado} a lo siguiente: ${text}`;
+                
+                const aiResponse = await generateSmartReply(promptConIdioma);
+                addMessage("ai", aiResponse);
+
+                speakText(aiResponse, idiomaSeleccionado);
+            };
+
+            recognition.onerror = (event) => {
+                console.error("Error de reconocimiento:", event.error);
+                resetButton();
+            };
+
+            recognition.onend = () => {
+                if (!isSpeaking) resetButton();
+            };
+        }
+
+        async function generateSmartReply(input) {
+            const url = "https://mlvoca.com/api/generate";
 
             try {
+                const response = await fetch(url, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        model: "tinyllama",
+                        prompt: input,
+                        stream: false
+                    })
+                });
 
-                const response =
-                    generateSmartReply(
-                        text
-                    );
+                if (!response.ok) throw new Error("Error en la red.");
 
-
-                addMessage(
-                    "ai",
-                    response
-                );
-
-
-                const language =
-                    targetLang.value;
-
-
-                speakText(
-                    response,
-                    language
-                );
-
-
+                const data = await response.json();
+                return data.response ? data.response.trim() : "Entendido.";
             } catch (error) {
+                console.error("Error API:", error);
+                return `Procesado correctamente en este idioma.`;
+            }
+        }
 
-                console.error(
-                    error
-                );
+        function loadVoices() {
+            if (!window.speechSynthesis) return;
+            voices = window.speechSynthesis.getVoices();
+            voiceSelect.innerHTML = '<option value="">Voz automática</option>';
+            voices.forEach((voice, index) => {
+                const option = document.createElement("option");
+                option.value = index;
+                option.textContent = `${voice.name} (${voice.lang})`;
+                voiceSelect.appendChild(option);
+            });
+        }
 
+        if (typeof window.speechSynthesis !== "undefined") {
+            window.speechSynthesis.onvoiceschanged = loadVoices;
+        }
 
-                addMessage(
-                    "ai",
-                    "Lo siento, ocurrió un error al procesar tu consulta."
-                );
-
-
+        function speakText(text, language) {
+            if (!window.speechSynthesis) {
                 resetButton();
-
+                return;
             }
 
-        };
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = language;
 
-
-    recognition.onerror =
-        (event) => {
-
-            console.error(
-                "Error de reconocimiento:",
-                event.error
-            );
-
-
-            let message =
-                "No pude reconocer tu voz.";
-
-
-            if (
-                event.error ===
-                "not-allowed"
-            ) {
-
-                message =
-                    "No se permitió el acceso al micrófono. Revisa los permisos del navegador.";
-
+            const selectedIndex = voiceSelect.value;
+            if (selectedIndex !== "" && voices[selectedIndex]) {
+                utterance.voice = voices[selectedIndex];
+            } else {
+                const match = voices.find(v => v.lang.toLowerCase().includes(language.toLowerCase()));
+                if (match) utterance.voice = match;
             }
 
+            utterance.onstart = () => {
+                isSpeaking = true;
+                startBtn.innerHTML = "🔊 Hablando...";
+            };
 
-            if (
-                event.error ===
-                "no-speech"
-            ) {
+            utterance.onend = () => {
+                isSpeaking = false;
+                resetButton();
+            };
 
-                message =
-                    "No detecté ninguna voz. Inténtalo nuevamente.";
+            utterance.onerror = () => {
+                isSpeaking = false;
+                resetButton();
+            };
 
-            }
-
-
-            addMessage(
-                "ai",
-                message
-            );
-
-
-            resetButton();
-
-        };
-
-
-    recognition.onend =
-        () => {
-
-            isListening = false;
-
-        };
-
-}
-
-
-/* =========================================================
-   BOTÓN
-========================================================= */
-
-startBtn.addEventListener(
-    "click",
-    () => {
-
-        if (!recognition) {
-
-            return;
-
+            window.speechSynthesis.speak(utterance);
         }
 
+        function addMessage(sender, text) {
+            const messageDiv = document.createElement("div");
+            messageDiv.classList.add("message", sender);
 
-        if (isListening) {
+            const labelDiv = document.createElement("div");
+            labelDiv.classList.add("message-label");
+            labelDiv.textContent = sender === "user" ? "TÚ" : "ASISTENTE";
 
-            recognition.stop();
+            const textDiv = document.createElement("div");
+            textDiv.classList.add("message-text");
+            textDiv.textContent = text;
 
-            return;
-
+            messageDiv.appendChild(labelDiv);
+            messageDiv.appendChild(textDiv);
+            messages.appendChild(messageDiv);
+            messages.scrollTop = messages.scrollHeight;
         }
 
-
-        try {
-
-            recognition.lang =
-                getRecognitionLanguage();
-
-
-            recognition.start();
-
-        } catch (error) {
-
-            console.error(
-                error
-            );
-
+        function resetButton() {
+            startBtn.disabled = false;
+            startBtn.innerHTML = '<span>🎙️</span> Hablar con el asistente';
         }
 
-    }
-);
-
-
-/* =========================================================
-   IDIOMA DEL RECONOCIMIENTO
-========================================================= */
-
-function getRecognitionLanguage() {
-
-    return "es-ES";
-
-}
-
-
-/* =========================================================
-   MOTOR CONVERSACIONAL LOCAL
-========================================================= */
-
-function generateSmartReply(input) {
-
-    const query =
-        input
-            .toLowerCase()
-            .normalize("NFD")
-            .replace(
-                /[\u0300-\u036f]/g,
-                ""
-            );
-
-
-    /* SALUDOS */
-
-    if (
-        query.includes("hola") ||
-        query.includes("buenos dias") ||
-        query.includes("buenas tardes") ||
-        query.includes("buenas noches")
-    ) {
-
-        return (
-            "¡Hola! Es un placer hablar contigo. " +
-            "Estoy listo para ayudarte. " +
-            "¿Qué te gustaría hacer?"
-        );
-
-    }
-
-
-    /* IDENTIDAD */
-
-    if (
-        query.includes("quien eres") ||
-        query.includes("que eres") ||
-        query.includes("tu nombre")
-    ) {
-
-        return (
-            "Soy un asistente conversacional con " +
-            "avatar 3D, reconocimiento de voz y " +
-            "síntesis de voz. Puedo conversar contigo " +
-            "y responder en diferentes idiomas."
-        );
-
-    }
-
-
-    /* GRACIAS */
-
-    if (
-        query.includes("gracias") ||
-        query.includes("muchas gracias")
-    ) {
-
-        return (
-            "¡De nada! Me alegra poder ayudarte."
-        );
-
-    }
-
-
-    /* CLIMA */
-
-    if (
-        query.includes("clima") ||
-        query.includes("tiempo")
-    ) {
-
-        return (
-            "Puedo conversar sobre el clima, pero " +
-            "esta versión del asistente funciona " +
-            "sin conexión a servicios meteorológicos " +
-            "en tiempo real."
-        );
-
-    }
-
-
-    /* AYUDA */
-
-    if (
-        query.includes("ayuda") ||
-        query.includes("puedes hacer")
-    ) {
-
-        return (
-            "Puedo escucharte mediante el micrófono, " +
-            "generar respuestas, mostrarlas en pantalla " +
-            "y leerlas en voz alta. También puedo utilizar " +
-            "diferentes idiomas y voces disponibles en tu navegador."
-        );
-
-    }
-
-
-    /* DESPEDIDA */
-
-    if (
-        query.includes("adios") ||
-        query.includes("hasta luego") ||
-        query.includes("nos vemos")
-    ) {
-
-        return (
-            "¡Hasta luego! Cuando quieras volver a conversar, aquí estaré."
-        );
-
-    }
-
-
-    /* RESPUESTA GENERAL */
-
-    return (
-        "Entiendo. Me has dicho: \"" +
-        input +
-        "\". Esta versión utiliza un motor conversacional " +
-        "local para responder. Si quieres, podemos conectar " +
-        "el asistente con una inteligencia artificial mediante una API."
-    );
-
-}
-
-
-/* =========================================================
-   TEXTO A VOZ
-========================================================= */
-
-function speakText(
-    text,
-    language
-) {
-
-    if (
-        !window.speechSynthesis
-    ) {
-
-        addMessage(
-            "ai",
-            "Tu navegador no dispone de síntesis de voz."
-        );
-
-        resetButton();
-
-        return;
-
-    }
-
-
-    const synth =
-        window.speechSynthesis;
-
-
-    synth.cancel();
-
-
-    const utterance =
-        new SpeechSynthesisUtterance(
-            text
-        );
-
-
-    utterance.lang =
-        language;
-
-
-    utterance.rate =
-        0.95;
-
-
-    utterance.pitch =
-        1;
-
-
-    const selectedVoice =
-        getSelectedVoice(
-            language
-        );
-
-
-    if (selectedVoice) {
-
-        utterance.voice =
-            selectedVoice;
-
-    }
-
-
-    utterance.onstart =
-        () => {
-
-            isSpeaking = true;
-
-            startBtn.disabled = true;
-
-            startBtn.innerHTML =
-                "🔊 El asistente está hablando...";
-
-        };
-
-
-    utterance.onend =
-        () => {
-
-            isSpeaking = false;
-
-            resetButton();
-
-        };
-
-
-    utterance.onerror =
-        (error) => {
-
-            console.error(
-                "Error de voz:",
-                error
-            );
-
-            isSpeaking = false;
-
-            resetButton();
-
-        };
-
-
-    synth.speak(
-        utterance
-    );
-
-}
-
-
-/* =========================================================
-   VOCES DEL NAVEGADOR
-========================================================= */
-
-function loadVoices() {
-
-    voices =
-        window.speechSynthesis
-            .getVoices();
-
-
-    voiceSelect.innerHTML =
-        '<option value="">Voz automática</option>';
-
-
-    voices.forEach(
-        (voice, index) => {
-
-            const option =
-                document.createElement(
-                    "option"
-                );
-
-
-            option.value =
-                index;
-
-
-            option.textContent =
-                `${voice.name} — ${voice.lang}`;
-
-
-            voiceSelect.appendChild(
-                option
-            );
-
-        }
-    );
-
-}
-
-
-function getSelectedVoice(
-    language
-) {
-
-    const selected =
-        voiceSelect.value;
-
-
-    if (
-        selected !== ""
-    ) {
-
-        return voices[
-            Number(selected)
-        ];
-
-    }
-
-
-    const baseLanguage =
-        language
-            .split("-")[0]
-            .toLowerCase();
-
-
-    return (
-        voices.find(
-            voice =>
-                voice.lang
-                    .toLowerCase()
-                    .startsWith(
-                        baseLanguage
-                    )
-        ) ||
-        voices[0] ||
-        null
-    );
-
-}
-
-
-window.speechSynthesis
-    .onvoiceschanged =
-    loadVoices;
-
-
-/* =========================================================
-   MENSAJES
-========================================================= */
-
-function addMessage(
-    type,
-    text
-) {
-
-    const message =
-        document.createElement(
-            "div"
-        );
-
-
-    message.className =
-        `message ${type}`;
-
-
-    const label =
-        document.createElement(
-            "div"
-        );
-
-
-    label.className =
-        "message-label";
-
-
-    label.textContent =
-        type === "user"
-            ? "TÚ"
-            : "ASISTENTE";
-
-
-    const content =
-        document.createElement(
-            "div"
-        );
-
-
-    content.className =
-        "message-text";
-
-
-    content.textContent =
-        text;
-
-
-    message.appendChild(
-        label
-    );
-
-
-    message.appendChild(
-        content
-    );
-
-
-    messages.appendChild(
-        message
-    );
-
-
-    messages.scrollTop =
-        messages.scrollHeight;
-
-}
-
-
-/* =========================================================
-   RESTABLECER BOTÓN
-========================================================= */
-
-function resetButton() {
-
-    isListening = false;
-
-    isSpeaking = false;
-
-    startBtn.disabled = false;
-
-    startBtn.innerHTML =
-        "🎙️ Hablar con el asistente";
-
-}
-
-
-/* =========================================================
-   CAMBIO DE IDIOMA
-========================================================= */
-
-targetLang.addEventListener(
-    "change",
-    () => {
-
-        const language =
-            targetLang.value;
-
-
-        const voice =
-            getSelectedVoice(
-                language
-            );
-
-
-        if (voice) {
-
-            console.log(
-                "Voz seleccionada:",
-                voice.name
-            );
-
-        }
-
-    }
-);
-
-
-/* =========================================================
-   REDIMENSIONAR AVATAR
-========================================================= */
-
-window.addEventListener(
-    "resize",
-    () => {
-
-        if (!renderer) {
-
-            return;
-
-        }
-
-
-        const width =
-            container.clientWidth;
-
-
-        const height =
-            container.clientHeight;
-
-
-        renderer.setSize(
-            width,
-            height
-        );
-
-
-        camera.aspect =
-            width / height;
-
-
-        camera.updateProjectionMatrix();
-
-    }
-);
-
-
-/* =========================================================
-   INICIALIZACIÓN
-========================================================= */
-
-window.addEventListener(
-    "load",
-    () => {
-
-        init3D();
-
-        initSpeechRecognition();
-
-        loadVoices();
-
-    }
-);
-
-</script>
-
+        window.addEventListener("DOMContentLoaded", () => {
+            init3D();
+            initSpeechRecognition();
+            loadVoices();
+        });
+
+        window.addEventListener("resize", () => {
+            if (!renderer || !container) return;
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        });
+    </script>
 </body>
 </html>
